@@ -1,76 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IITM Calendar Dashboard</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@500&display=swap');
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IITM Calendar Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@500&display=swap');
 
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #000;
-      color: #fff;
-      font-family: 'Comfortaa', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-    }
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000;
+  color: #fff;
+  font-family: 'Comfortaa', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
 
-    h1 {
-      font-size: 1.8rem;
-      background: linear-gradient(90deg, #00f7ff, #0ff, #00e5ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-shadow: 0 0 15px #0ff;
-      margin-bottom: 20px;
-    }
+h1 {
+  font-size: 1.8rem;
+  background: linear-gradient(90deg, #00f7ff, #0ff, #00e5ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px #0ff;
+  margin-bottom: 20px;
+}
 
-    .connect-btn {
-      padding: 12px 20px;
-      background-color: #0ff;
-      color: #000;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 0 15px #0ff;
-      transition: all 0.3s ease-in-out;
-      margin-bottom: 20px;
-    }
+.connect-btn {
+  padding: 12px 20px;
+  background-color: #0ff;
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 15px #0ff;
+  transition: all 0.3s ease-in-out;
+}
 
-    .connect-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 25px #0ff;
-    }
+.connect-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px #0ff;
+}
 
-    .events-container {
-      margin-top: 10px;
-      width: 95%;
-      max-width: 600px;
-      background-color: #111;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0, 231, 255, 0.3);
-    }
+.events-container {
+  margin-top: 25px;
+  width: 95%;
+  max-width: 600px;
+  background-color: #111;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 231, 255, 0.3);
+}
 
-    .event {
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.95rem;
-    }
+.event {
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
 
-    .class { background-color: rgba(0, 255, 150, 0.1); border: 1px solid #00ff96; }
-    .assignment { background-color: rgba(255, 215, 0, 0.1); border: 1px solid #ffd700; }
-    .exam { background-color: rgba(255, 50, 50, 0.1); border: 1px solid #ff3232; }
-  </style>
+.class { background-color: rgba(0, 255, 150, 0.1); border: 1px solid #00ff96; }
+.assignment { background-color: rgba(255, 215, 0, 0.1); border: 1px solid #ffd700; }
+.exam { background-color: rgba(255, 50, 50, 0.1); border: 1px solid #ff3232; }
+</style>
 </head>
 <body>
 
@@ -78,20 +77,38 @@
 <button id="connectBtn" class="connect-btn">Connect Google Calendar</button>
 <div class="events-container" id="events"></div>
 
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 <script>
-const clientId = "912636453321-tkg4elnp0m0ge04fr060coo08jsg6d4u.apps.googleusercontent.com";
-const redirectUri = "https://ujan2007.github.io/oauth2callback"; // must match your oauth2callback.html
-const scope = "https://www.googleapis.com/auth/calendar.readonly";
+const CLIENT_ID = "912636453321-tkg4elnp0m0ge04fr060coo08jsg6u.apps.googleusercontent.com";
+const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
+
+let tokenClient;
+
+function initOAuth() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: (response) => {
+      if (response.access_token) {
+        alert("✅ Connected to Google Calendar!");
+        fetchCalendarEvents(response.access_token);
+      } else {
+        alert("❌ Failed to get access token");
+      }
+    },
+  });
+}
 
 document.getElementById("connectBtn").addEventListener("click", () => {
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&include_granted_scopes=true`;
-  window.location.href = authUrl;
+  if (!tokenClient) initOAuth();
+  tokenClient.requestAccessToken({prompt: 'consent'}); // Always ask for consent for testing
 });
 
-// Function to fetch calendar events after access token is returned
-function fetchCalendarEvents(accessToken) {
+function fetchCalendarEvents(token) {
   fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=10&orderBy=startTime&singleEvents=true", {
-    headers: { Authorization: `Bearer ${accessToken}` }
+    headers: { Authorization: `Bearer ${token}` }
   })
   .then(res => res.json())
   .then(data => {
@@ -104,28 +121,14 @@ function fetchCalendarEvents(accessToken) {
     data.items.forEach(ev => {
       const div = document.createElement("div");
       div.classList.add("event");
-
       let typeClass = ev.summary.toLowerCase().includes("assignment") ? "assignment" :
                       ev.summary.toLowerCase().includes("exam") ? "exam" : "class";
       div.classList.add(typeClass);
-
-      const startTime = new Date(ev.start.dateTime || ev.start.date).toLocaleString();
-      div.innerHTML = `<span>${ev.summary}</span><span>${startTime}</span>`;
+      div.innerHTML = `<span>${ev.summary}</span><span>${new Date(ev.start.dateTime || ev.start.date).toLocaleString()}</span>`;
       eventsDiv.appendChild(div);
     });
   })
   .catch(err => console.error(err));
-}
-
-// Check if redirected with access token
-const hash = window.location.hash.substr(1);
-const params = new URLSearchParams(hash);
-const accessToken = params.get("access_token");
-if (accessToken) {
-  alert("✅ Google Calendar Connected!");
-  fetchCalendarEvents(accessToken);
-  // Clean the URL
-  window.history.replaceState({}, document.title, "/");
 }
 </script>
 
