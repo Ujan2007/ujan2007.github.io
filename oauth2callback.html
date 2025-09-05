@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h2>Connected!</h2>
+<script>
+  const hash = window.location.hash.substr(1);
+  const params = new URLSearchParams(hash);
+  const access_token = params.get("access_token");
+  if(access_token) {
+    alert("✅ Google Calendar Connected!");
+    console.log("Access Token:", access_token);
+  } else {
+    alert("❌ Connection Failed");
+  }
+</script>
+</body>
+</html>
